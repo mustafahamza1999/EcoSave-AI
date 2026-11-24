@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoSave AI - نظام التنبؤ الذكي</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; text-align: center; padding: 30px; color: #333; }
+        
+        /* زر دخول المسؤول في الزاوية */
+        .admin-nav { position: absolute; top: 20px; left: 20px; }
+        .btn-admin { background: transparent; color: #666; border: 1px solid #ccc; padding: 8px 15px; border-radius: 20px; text-decoration: none; font-size: 13px; transition: 0.3s; }
+        .btn-admin:hover { background: #eee; color: #28a745; border-color: #28a745; }
+
+        .box { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: inline-block; width: 100%; max-width: 650px; position: relative; }
+        h2 { color: #28a745; margin-bottom: 10px; }
+        .subtitle { color: #666; font-size: 0.9em; margin-bottom: 25px; }
+        input { width: 85%; padding: 12px; margin: 10px 0; border: 2px solid #eee; border-radius: 8px; font-size: 16px; transition: 0.3s; }
+        input:focus { border-color: #28a745; outline: none; }
+        button { background: #28a745; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        button:hover { background: #218838; transform: translateY(-2px); }
+        
+        .btn-pdf { background: #dc3545; margin-top: 15px; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-pdf:hover { background: #c82333; }
+
+        .result-container { margin-top: 30px; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #e0e0e0; text-align: right; }
+        .confidence-badge { display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 5px 15px; border-radius: 20px; font-weight: bold; margin-bottom: 15px; }
+        .category-title { color: #2c3e50; border-bottom: 2px solid #28a745; padding-bottom: 5px; display: inline-block; }
+        
+        .steps-list { list-style: none; padding: 0; margin-top: 15px; }
+        .steps-list li { background: #f9f9f9; padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; border-right: 4px solid #28a745; position: relative; }
+        
+        .history-box { margin-top: 40px; text-align: right; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .history-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .history-table th, .history-table td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
+        .history-table th { background: #f8f9fa; color: #28a745; }
+
+        .chart-box { margin-top: 30px; border-top: 1px dashed #ccc; padding-top: 20px; }
+        .error-msg { color: #d32f2f; background: #ffedea; padding: 15px; border-radius: 8px; margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-nav">
+        <a href="/login" class="btn-admin">دخول المسؤول 🔐</a>
+    </div>
+
+    <div class="box">
+        <h2>EcoSave AI 🤖🌱</h2>
+        <p class="subtitle">نظام خبير يعتمد على الشبكات العصبية (MLP) والتدريب اليدوي</p>
+        
+        <form action="/generate" method="POST">
+            <input type="text" name="ingredients" placeholder="أدخل اسم المادة (مثلاً: قنينة بلاستيك)..." 
+                   value="{{ old_ingredients if old_ingredients else '' }}" required>
+            <br>
+            <button type="submit">بدء التنبؤ بالخوارزمية</button>
+        </form>
+
+        {% if result %}
+        <div class="result-container">
+            <div class="confidence-badge">🎯 نسبة الثقة: {{ result.confidence }}%</div>
+            <br>
+            <h3 class="category-title">🌿 النوع المتوقع: {{ result.category }}</h3>
+            
+            <div class="instruction-text">
+                <strong>🛠️ خطوات الصنع المقترحة:</strong>
+                <ul class="steps-list">
+                    {% for step in result.steps %}
+                    <li>✅ {{ step }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <form action="/download_report" method="POST">
+                <input type="hidden" name="item" value="{{ result.item }}">
+                <input type="hidden" name="category" value="{{ result.category }}">
+                <input type="hidden" name="confidence" value="{{ result.confidence }}">
+                <input type="hidden" name="instruction" value="{{ result.instruction }}">
+                <button type="submit" class="btn-pdf">📥 تحميل تقرير PDF</button>
+            </form>
+
+            <div class="chart-box">
+                {{ result.graph | safe }}
+            </div>
+        </div>
+
+        {% elif recipe %}
+        <div class="error-msg">
+            {{ recipe }}
+        </div>
+        {% endif %}
+
+        {% if history %}
+        <div class="history-box">
+            <h4>🕒 آخر عمليات البحث:</h4>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>المادة</th>
+                        <th>التصنيف</th>
+                        <th>الثقة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in history %}
+                    <tr>
+                        <td>{{ entry.item }}</td>
+                        <td>{{ entry.result }}</td>
+                        <td>{{ entry.score }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <p style="margin-top: 20px; color: #888; font-size: 0.8em;">مشروع تخرج - هندسة الذكاء الاصطناعي 2026</p>
+
+</body>
+</html>

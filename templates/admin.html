@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة التحكم - EcoSave AI</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 40px; text-align: center; }
+        .admin-box { background: white; padding: 30px; border-radius: 20px; display: inline-block; width: 80%; max-width: 800px; text-align: right; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        h2 { color: #28a745; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .stat-card { background: #e8f5e9; padding: 20px; border-radius: 10px; display: inline-block; margin: 10px; min-width: 150px; text-align: center; }
+        .logout-btn { background: #dc3545; color: white; padding: 8px 20px; border-radius: 5px; text-decoration: none; float: left; font-weight: bold; }
+        
+        .upload-section { margin-top: 30px; padding: 20px; border: 2px dashed #28a745; border-radius: 15px; background: #f9fff9; text-align: center; }
+        .btn-upload { background: #28a745; color: white; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        
+        ul { list-style: none; padding: 0; margin-top: 20px; }
+        li { background: #fff; margin: 5px 0; padding: 10px; border-radius: 5px; border-right: 5px solid #28a745; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+    <div class="admin-box">
+        <a href="/logout" class="logout-btn">خروج 👋</a>
+        <h2>لوحة تحكم المسؤول ⚙️</h2>
+        
+        <div class="stat-card">
+            <h3 style="margin:0; font-size: 2em;">{{ total_data }}</h3>
+            <p style="margin:5px 0 0 0;">عينة في قاعدة البيانات</p>
+        </div>
+
+        <div class="upload-section">
+            <h3>📤 تحديث قاعدة البيانات (Dataset)</h3>
+            <p style="font-size: 0.9em; color: #666;">ارفع ملف CSV جديد لإعادة تدريب الشبكة العصبية تلقائياً.</p>
+            <form action="/upload_csv" method="POST" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".csv" required>
+                <br>
+                <button type="submit" class="btn-upload">تحديث وتدريب النظام الآن 🚀</button>
+            </form>
+        </div>
+
+        <h3>آخر النشاطات في هذه الجلسة:</h3>
+        <ul>
+            {% for entry in history %}
+            <li>تم التنبؤ بمادة: <b>{{ entry.item }}</b> ← التصنيف: {{ entry.result }} (بثقة {{ entry.score }}%)</li>
+            {% else %}
+            <li>لا يوجد عمليات بحث مسجلة حالياً.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>
